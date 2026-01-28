@@ -12,8 +12,8 @@ E2E тесты на Playwright для Testboard.
 В .env внесены данные моего пользователя:
 
 ```bash
-const USER_EMAIL = dollahant@ya.ru;
-const USER_PASSWORD = E9z3nTE8BAdBdJx;
+const USER_EMAIL = ;
+const USER_PASSWORD = ;
 ```
 
 ### Запуск тестов
