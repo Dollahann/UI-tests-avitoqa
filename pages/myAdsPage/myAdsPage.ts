@@ -1,20 +1,25 @@
 import { Locator, Page, expect } from "@playwright/test";
-import { BasePage } from "../basePage";
+import {BasePage} from "../basePage";
+import {MY_ADS_URL} from "../../helpers/consts";
 
 export class MyAdsPage extends BasePage {
     protected pageName = "Мои объявления";
 
     readonly emptyStateTitle: Locator;
     readonly myAdsTitle: Locator;
-    readonly myAdvertisementCard: Locator;
-    readonly myAdAdvertisementCardTitle: Locator;
+    readonly adDeleteButton: Locator;
+    readonly adMenuButton: string;
+    readonly myAdCardTitle: string;
+    readonly myAdCard: string;
 
     constructor(page: Page) {
         super(page);
         this.myAdsTitle = page.locator("[data-marker=\"my-ads-title\"]");
         this.emptyStateTitle = page.locator("[data-marker=\"empty-state-title\"]");
-        this.myAdvertisementCard = page.locator("[data-marker=\"my-ad-card\"]");
-        this.myAdAdvertisementCardTitle = page.locator("[data-marker=\"my-ad-card-title\"]");
+        this.adDeleteButton = page.locator("[data-marker=\"ad-delete-button\"]");
+        this.adMenuButton = "[data-marker=\"ad-menu-button\"]";
+        this.myAdCardTitle = "[data-marker=\"my-ad-card-title\"]";
+        this.myAdCard = "[data-marker=\"my-ad-card\"]";
     }
 
     protected root(): Locator {
@@ -22,38 +27,47 @@ export class MyAdsPage extends BasePage {
     }
 
     async openMyAdsPage() {
-        await this.page.goto("/my/advertisements");
+        await this.page.goto(MY_ADS_URL);
         await this.waitForOpen();
+    }
+
+    async openAdMenuByTitle(title: string) {
+        const card = this.getCardByTitle(title);
+        await expect(card).toBeVisible();
+
+        const menuButton = card.locator(this.adMenuButton);
+        await expect(menuButton).toBeVisible();
+        await menuButton.click();
+    }
+
+    async clickDeleteInAdMenu() {
+        await expect(this.adDeleteButton).toBeVisible();
+        await this.adDeleteButton.click();
+    }
+
+    getCardByTitle(title: string): Locator {
+        const titleLocator = this.page.locator(this.myAdCardTitle, { hasText: title });
+        const card = this.page.locator(this.myAdCard, { has: titleLocator }).first();
+
+        return card;
     }
 
     async assertEmptyStateTitleIsVisible() {
         await expect(
             this.emptyStateTitle,
-            "Заголовок заглушки отсутствия объявлений не отображается",
-        ).toBeVisible();
+            "Заголовок заглушки отсутствия объявлений не отображается")
+            .toBeVisible();
     }
 
-    async deleteAd(number: number){
-        await Promise.all([
-            this.page.waitForURL(/\/advertisements\/\d+/, { waitUntil: "domcontentloaded" }),
-            this.myAdvertisementCard.nth(number).click(),
-            await this.page.locator("[data-marker=\"ad-actions-delete-button\"]").click(),
-            await this.page.locator("[data-marker=\"delete-modal-confirm\"]").click(),
-        ]);
+    async assertItemWithTitleVisible(title: string) {
+        const titleLocator = this.page.locator(this.myAdCardTitle, { hasText: title });
+
+        await expect(titleLocator).toBeVisible();
     }
 
-    async adsDoNotContains(title: string){
-        const ads = this.myAdAdvertisementCardTitle;
-        const target = ads.filter({ hasText: title });
-        await expect(target, `Объявление "${title}" найдено в списке`).toHaveCount(0);
-    }
+    async assertItemWithTitleNotExists(title: string) {
+        const titleLocator = this.page.locator(this.myAdCardTitle, { hasText: title });
 
-    async clearAds() { //не отрабатывает полностью
-        const cards = this.myAdvertisementCard;
-        while (await cards.count() > 0) {
-            await this.deleteAd(0);
-            await this.page.waitForTimeout(500); 
-            await this.openMyAdsPage();
-        }
+        await expect(titleLocator).toBeHidden();
     }
 }

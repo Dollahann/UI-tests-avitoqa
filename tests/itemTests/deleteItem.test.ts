@@ -1,36 +1,24 @@
 import { test } from "../../fixtures/auth.fixture";
-import {MyAdsPage} from "../../pages/myAdsPage/myAdsPage";
+import { MyAdsPage } from "../../pages/myAdsPage/myAdsPage";
 import { MainPage } from "../../pages/mainPage/mainPage";
-import { createUniqueAd } from "../../helpers/createUniqueAdHelper";
+import { DeleteModalPage } from "../../pages/deleteModalPage/deleteModalPage";
 
-test("Удаление объявления", async ({ authedPage }) => {
-    //arrange
+test("Удаление объявления", async ({ authedPage, authWithAd }) => {
+    // arrange
+    const itemTitle = authWithAd.ad.title;
     const mainPage = new MainPage(authedPage);
-    const myAdsPage = new MyAdsPage(authedPage);
+    const myAds = new MyAdsPage(authedPage);
+    const deleteModal = new DeleteModalPage(authedPage);
 
-    //act
+    // act
     await mainPage.openMainPage();
-    await mainPage.openMyAdsPage();
-    await myAdsPage.waitForOpen();
-    const adToDelete = await createUniqueAd(authedPage, {price: 100});
-    await authedPage.waitForTimeout(1000);
-    await myAdsPage.openMyAdsPage();
-    await myAdsPage.deleteAd(0);
-    await authedPage.waitForTimeout(1500);
-    await myAdsPage.openMyAdsPage();
+    await myAds.openMyAdsPage();
+    await myAds.assertItemWithTitleVisible(itemTitle);
+    await myAds.openAdMenuByTitle(itemTitle);
+    await myAds.clickDeleteInAdMenu();
+    await deleteModal.clickConfirmDeleteButton();
+    await authedPage.reload();
 
-    //assert
-    if(myAdsPage.myAdAdvertisementCardTitle){
-        myAdsPage.adsDoNotContains(adToDelete.title);
-    }
-    else{
-        myAdsPage.assertEmptyStateTitleIsVisible();
-    }
-
-    //act
-    await mainPage.openMainPage();
-    await mainPage.searchAdByTitle(adToDelete.title);
-
-    //assert
-    await mainPage.assertEmptyStateTitleIsVisible();
+    // assert
+    await myAds.assertItemWithTitleNotExists(itemTitle);
 });

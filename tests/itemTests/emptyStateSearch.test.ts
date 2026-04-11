@@ -1,20 +1,14 @@
 import { test } from "../../fixtures/auth.fixture";
-import { MainPage } from "../../pages/mainPage/mainPage";
-import { MyAdsPage } from "../../pages/myAdsPage/myAdsPage";
-import { createUniqueAd } from "../../helpers/createUniqueAdHelper";
+import { SearchPage } from "../../pages/searchPage/searchPage";
 
-test("Проверка заглушки Ничего не найдено", async ({authedPage}) => {
+test("Отображение заглушки при пустой выдаче в поиске", async ({ page }) => {
     //arrange
-    const mainPage = new MainPage(authedPage);
-    const myAdsPage = new MyAdsPage(authedPage);
+    const searchPage = new SearchPage(page);
+
     //act
-    await mainPage.openMainPage();
-    const deleted_ad = await createUniqueAd(authedPage, {price: 0});
-    await myAdsPage.openMyAdsPage();
-    await myAdsPage.deleteAd(0);
-    await authedPage.waitForTimeout(1000);
-    await mainPage.openMainPage();
-    await mainPage.searchAdByTitle(deleted_ad.title);
+    await searchPage.openSearchPage();
+    await searchPage.fillSearchInput(`Test-${Date.now()}`);
+
     //assert
-    await mainPage.assertEmptyStateTitleIsVisible();
+    await searchPage.assertEmptyResultStubIsVisible();
 });
